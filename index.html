@@ -1,169 +1,47 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ملخص محاضرات الأحياء</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Cairo', sans-serif; }
-        .content-section { display: none; }
-        .content-section.active { display: block; }
-        .sidebar-link.active { background-color: #0369a1; color: white; }
-        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
-        @media (min-width: 768px) { .chart-container { height: 350px; } }
-        .quiz-option { cursor: pointer; }
-        .quiz-option.correct { background-color: #34d399; color: white; }
-        .quiz-option.incorrect { background-color: #f87171; color: white; }
-    </style>
-</head>
-<body class="bg-stone-50 text-stone-800">
-
-<div class="flex flex-col md:flex-row min-h-screen">
-    <!-- Sidebar -->
-    <aside id="sidebar" class="w-full md:w-64 bg-stone-100 p-4 md:p-6 shadow-lg fixed bottom-0 md:relative md:min-h-screen z-20">
-        <h1 class="text-2xl font-bold text-sky-800 mb-6 hidden md:block">مادة الأحياء (Biology)</h1>
-        <nav id="nav-menu" class="flex md:flex-col justify-around md:justify-start md:space-y-2"></nav>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 p-4 md:p-8 pb-24 md:pb-8">
-        <div id="content-container"></div>
-
-        <div class="fixed bottom-0 left-0 w-full bg-white shadow-md p-4 flex justify-between items-center z-10 md:relative md:mt-8 md:bg-transparent md:shadow-none md:p-0">
-            <button id="prevBtn" class="bg-sky-600 text-white py-2 px-6 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-300">
-                <span class="hidden md:inline">السابق (Previous)</span>
-                <span class="md:hidden">&rarr;</span>
-            </button>
-            <span id="page-indicator" class="text-sm font-semibold text-gray-600"></span>
-            <button id="nextBtn" class="bg-sky-600 text-white py-2 px-6 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-300">
-                <span class="hidden md:inline">التالي (Next)</span>
-                <span class="md:hidden">&larr;</span>
-            </button>
-        </div>
-    </main>
-</div>
-
-<script>
-const sectionsData = [
-    { title: 'مقدمة في علم الأحياء', id: 'introduction', content: `<div class="bg-white p-8 rounded-xl shadow-md animate-fade-in"><h2 class="text-3xl font-bold text-sky-800 mb-4">Chapter 1: Introduction to Living Organisms (مقدمة في الكائنات الحية)</h2><p class="text-lg text-stone-600 mb-2">مرحباً بك في ملخص مادة علم الأحياء للمستوى الأول.</p><p class="text-md text-stone-500">تم إعداد هذا الملخص التفاعلي لتسهيل استعراض وفهم المحاضرات الأساسية.</p><div class="mt-6 border-t pt-4"><p class="font-semibold">by: mohamed hossam eldin</p></div></div>` },
-    { title: 'خصائص الحياة', id: 'properties-of-life', content: `<div class="bg-white p-8 rounded-xl shadow-md animate-fade-in"><h2 class="text-3xl font-bold text-sky-800 mb-6">Properties of Life (خصائص الحياة)</h2><p class="text-lg text-stone-600 mb-8">All living organisms share several key characteristics or functions. (تتشارك جميع الكائنات الحية في العديد من الخصائص أو الوظائف الرئيسية.)</p><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><div class="border border-stone-200 p-4 rounded-lg bg-stone-50"><h3 class="font-bold text-xl mb-2 text-sky-700">1. Order (التنظيم)</h3><p>Organisms are highly organized. (الكائنات الحية هي هياكل منظمة.)</p></div><div class="border border-stone-200 p-4 rounded-lg bg-stone-50"><h3 class="font-bold text-xl mb-2 text-sky-700">2. Sensitivity (الاستجابة للمؤثرات)</h3><p>Organisms respond to stimuli. (تستجيب الكائنات الحية لمؤثرات متنوعة.)</p></div></div></div>` },
-    { title: 'مستويات التنظيم', id: 'organization-levels', content: `<div class="bg-white p-8 rounded-xl shadow-md animate-fade-in"><h2 class="text-3xl font-bold text-sky-800 mb-6">Structured Hierarchy of Life (التسلسل الهرمي للحياة)</h2><div class="space-y-4"><div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Atoms & Molecules (ذرات وجزيئات):</strong> Chemical building blocks.</div><div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Cells (خلايا):</strong> Fundamental unit of life.</div></div></div>` },
-    { title: 'أنواع الخلايا', id: 'cell-types', content: `<div class="bg-white p-8 rounded-xl shadow-md animate-fade-in"><h2 class="text-3xl font-bold text-sky-800 mb-4">Chapter 2: Cell Types (أنواع الخلايا)</h2><div class="flex justify-center gap-4 mb-8"><button id="prok-euk-btn" class="cell-type-btn bg-sky-600 text-white py-2 px-5 rounded-lg">Prokaryotic vs Eukaryotic</button><button id="animal-plant-btn" class="cell-type-btn bg-stone-200 text-stone-700 py-2 px-5 rounded-lg">Animal vs Plant</button></div><div id="cell-comparison-content"></div></div>` },
-    { title: 'أسئلة التقييم', id: 'quiz', content: `<div class="bg-white p-8 rounded-xl shadow-md animate-fade-in"><h2 class="text-3xl font-bold text-sky-800 mb-4">Quiz (اختبار)</h2><div id="quiz-container"></div></div>` }
-];
-
-const questions = [
-    { question: "What is the ability of an organism to maintain a constant internal environment?", answerOptions: [
-        { text: "Reproduction (التكاثر)", isCorrect:false, rationale:"Reproduction is about creating new offspring." },
-        { text: "Homeostasis (التوازن)", isCorrect:true, rationale:"Homeostasis maintains a 'steady state'." },
-        { text: "Regulation (التنظيم)", isCorrect:false, rationale:"Regulation coordinates functions but not steady state." },
-        { text: "Sensitivity (الاستجابة)", isCorrect:false, rationale:"Sensitivity is response to stimulus." }
-    ], hint:"Think of a 'steady state'." },
-    { question: "ما هو التسلسل الهرمي الصحيح من الأبسط إلى الأكثر تعقيدًا؟", answerOptions: [
-        { text:"Cell → Organ → Tissue", isCorrect:false, rationale:"Correct is Cell → Tissue → Organ." },
-        { text:"Atom → Organelle → Cell → Tissue", isCorrect:false, rationale:"Missing molecule level." },
-        { text:"Atom → Molecule → Organelle → Cell", isCorrect:true, rationale:"Correct hierarchy from simplest to cell." },
-        { text:"Tissue → Organ → System", isCorrect:false, rationale:"Doesn't start from simplest level." }
-    ], hint:"تذكر أن الحياة تبدأ بالذرات والجزيئات." }
-];
-
-let currentPage = 0;
-const navMenu = document.getElementById('nav-menu');
-const contentContainer = document.getElementById('content-container');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const pageIndicator = document.getElementById('page-indicator');
-let chartInstance = null;
-
-function renderApp() {
-    navMenu.innerHTML = '';
-    contentContainer.innerHTML = '';
-    sectionsData.forEach((section,index)=>{
-        navMenu.innerHTML += `<a href="#" class="sidebar-link text-lg text-stone-600 hover:text-sky-800 p-2 rounded-md transition-colors" data-index="${index}">${section.title}</a>`;
-        contentContainer.innerHTML += `<section id="${section.id}" class="content-section" data-index="${index}">${section.content}</section>`;
-    });
-    updatePage();
-    addNavListeners();
-}
-
-function updatePage(){
-    document.querySelectorAll('.content-section').forEach((section,index)=>{
-        section.classList.toggle('active',index===currentPage);
-    });
-    document.querySelectorAll('.sidebar-link').forEach((link,index)=>{
-        link.classList.toggle('active',index===currentPage);
-    });
-    prevBtn.disabled = currentPage===0;
-    nextBtn.disabled = currentPage===sectionsData.length-1;
-    pageIndicator.textContent = `Page ${currentPage+1} of ${sectionsData.length} (صفحة ${currentPage+1} من ${sectionsData.length})`;
-
-    if(sectionsData[currentPage].id==='cell-types'){
-        const cellComparisonContent = document.getElementById('cell-comparison-content');
-        if(cellComparisonContent && !cellComparisonContent.innerHTML){ loadComparisonContent('prokEuk'); }
-        addCellTypeButtonListeners();
-    }
-    if(sectionsData[currentPage].id==='quiz'){
-        renderQuiz();
-    }
-}
-
-function addNavListeners(){
-    document.querySelectorAll('.sidebar-link').forEach(link=>{
-        link.addEventListener('click',(e)=>{
-            e.preventDefault();
-            currentPage=parseInt(e.target.dataset.index);
-            updatePage();
-        });
-    });
-    prevBtn.addEventListener('click',()=>{ if(currentPage>0){ currentPage--; updatePage(); }});
-    nextBtn.addEventListener('click',()=>{ if(currentPage<sectionsData.length-1){ currentPage++; updatePage(); }});
-}
-
-const comparisonContent = {
-    prokEuk:`<h3 class="text-2xl font-bold text-center mb-6">Prokaryotic vs Eukaryotic Cells</h3>`,
-    animalPlant:`<h3 class="text-2xl font-bold text-center mb-6">Animal vs Plant Cells</h3><div class="chart-container"><canvas id="cellSizeChart"></canvas></div>`
-};
-
-function loadComparisonContent(type){
-    const container = document.getElementById('cell-comparison-content');
-    if(chartInstance){ chartInstance.destroy(); chartInstance=null; }
-    container.innerHTML = comparisonContent[type];
-    if(type==='animalPlant'){ renderCellSizeChart(); }
-}
-
-function addCellTypeButtonListeners(){
-    const prokEukBtn = document.getElementById('prok-euk-btn');
-    const animalPlantBtn = document.getElementById('animal-plant-btn');
-    if(prokEukBtn) prokEukBtn.addEventListener('click',()=>{ loadComparisonContent('prokEuk'); prokEukBtn.classList.add('bg-sky-600','text-white'); prokEukBtn.classList.remove('bg-stone-200','text-stone-700'); animalPlantBtn.classList.add('bg-stone-200','text-stone-700'); animalPlantBtn.classList.remove('bg-sky-600','text-white'); });
-    if(animalPlantBtn) animalPlantBtn.addEventListener('click',()=>{ loadComparisonContent('animalPlant'); animalPlantBtn.classList.add('bg-sky-600','text-white'); animalPlantBtn.classList.remove('bg-stone-200','text-stone-700'); prokEukBtn.classList.add('bg-stone-200','text-stone-700'); prokEukBtn.classList.remove('bg-sky-600','text-white'); });
-}
-
-function renderCellSizeChart(){
-    const ctx = document.getElementById('cellSizeChart');
-    if(!ctx) return;
-    chartInstance = new Chart(ctx.getContext('2d'),{
-        type:'bar',
-        data:{ labels:['Animal Cell','Plant Cell'], datasets:[{ label:'Length µm', data:[30,100], backgroundColor:['rgba(56,189,248,0.6)','rgba(34,197,94,0.6)'], borderColor:['rgba(56,189,248,1)','rgba(34,197,94,1)'], borderWidth:1 }]},
-        options:{ responsive:true, maintainAspectRatio:false }
-    });
-}
-
-// Quiz
 function renderQuiz(){
-    const container = document.getElementById('quiz-container');
-    container.innerHTML = '';
-    questions.forEach((q,index)=>{
-        const qDiv = document.createElement('div');
-        qDiv.className='mb-6 p-4 border rounded-lg bg-stone-50';
-        let html=`<h3 class="font-semibold mb-2">${index+1}. ${q.question}</h3>`;
-        q.answerOptions.forEach((opt,optIndex)=>{
-            html+=`<div class="quiz-option border p-2 rounded mb-2" data-question="${index}" data-option="${optIndex}">${opt.text}</div>`;
-        });
-        html+=`<p class="text-sm text-gray-600 mt-2" id="hint-${index}">Hint: ${q.hint}</p>`;
-        html+=`<p class="text-sm mt-1" id="rationale-${index}"></p>`;
-        qDiv
+  const container=document.getElementById('quiz-container');
+  container.innerHTML='';
+  quizData.questions.forEach(q=>{
+    const qDiv=document.createElement('div');
+    qDiv.classList.add('mb-6','p-4','border','rounded','bg-stone-50');
+    qDiv.innerHTML=`<h3 class="font-bold mb-2">${q.questionNumber}. ${q.question}</h3>`;
+
+    const buttons=[];
+    q.answerOptions.forEach((opt,idx)=>{
+      const btn=document.createElement('button');
+      btn.className='block w-full text-left mb-2 p-2 rounded bg-stone-200 hover:bg-sky-200 transition-colors';
+      btn.textContent=opt.text;
+      btn.addEventListener('click',()=>{
+        buttons.forEach(b=>b.disabled=true);
+        if(opt.isCorrect){
+          btn.style.backgroundColor='green';
+          btn.style.color='white';
+        } else {
+          btn.style.backgroundColor='red';
+          btn.style.color='white';
+          const correctBtn=buttons.find(b=>b.dataset.correct==='true');
+          if(correctBtn){
+            correctBtn.style.backgroundColor='green';
+            correctBtn.style.color='white';
+          }
+        }
+        const rationaleDiv=document.createElement('div');
+        rationaleDiv.className='mt-2 text-sm text-gray-700';
+        rationaleDiv.textContent=`Explanation: ${opt.rationale}`;
+        qDiv.appendChild(rationaleDiv);
+      });
+      btn.dataset.correct=opt.isCorrect;
+      qDiv.appendChild(btn);
+      buttons.push(btn);
+    });
+
+    if(q.hint){
+      const hintDiv=document.createElement('div');
+      hintDiv.className='mt-2 text-sm text-gray-600';
+      hintDiv.textContent=`Hint: ${q.hint}`;
+      qDiv.appendChild(hintDiv);
+    }
+
+    container.appendChild(qDiv);
+  });
+}
