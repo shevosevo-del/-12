@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مستكشف مفاهيم علم الأحياء | Biology Concepts Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&family=Readex+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is structured into two main, switchable sections: "Properties of Life" and "Levels of Organization". This thematic separation allows users to focus on one core concept at a time, preventing information overload. The "Properties" section uses an interactive card grid, where clicking a card reveals detailed information, promoting active learning. The "Levels" section employs a visual, clickable hierarchy diagram, which is a more intuitive and effective way to teach structural relationships than a simple text list. This interactive, dual-theme structure was chosen to transform the passive, linear content of the lecture slides into an engaging, user-driven exploratory experience. -->
+    <!-- Visualization & Content Choices: Report Info: Definitions of 7 properties of life. Goal: Inform/Organize. Viz: Interactive card grid (HTML/CSS). Interaction: Click card to display details in a separate panel. Justification: Breaks down information into digestible chunks. | Report Info: Hierarchical levels of organization. Goal: Show Relationships/Organize. Viz: Clickable vertical diagram (HTML/CSS). Interaction: Click level to display its definition and context. Justification: Visually represents the hierarchy, making the concept of scale easier to grasp. All interactions are powered by vanilla JS to dynamically update content panels. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .font-english {
+            font-family: 'Readex Pro', sans-serif;
+        }
+        .nav-btn {
+            transition: all 0.3s ease;
+        }
+        .nav-btn.active {
+            background-color: #8D7B68;
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+        .nav-btn:not(.active):hover {
+            background-color: #E4E0DC;
+        }
+        .content-card, .level-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .content-card.active, .level-card.active {
+            border-color: #8D7B68;
+            background-color: #F5F2EF;
+            transform: translateY(-4px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .content-card:hover, .level-card:hover {
+            border-color: #A4907C;
+            transform: translateY(-2px);
+        }
+        .hierarchy-connector {
+            width: 2px;
+            background-color: #C8B6A6;
+            margin: -0.5rem auto;
+            height: 2rem;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F5F2EF;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #C8B6A6;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #A4907C;
+        }
+    </style>
+</head>
+<body class="bg-stone-50">
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-stone-800 font-english">Biology Concepts Explorer</h1>
+            <h2 class="text-2xl md:text-3xl font-bold text-stone-700 mt-1">مستكشف مفاهيم علم الأحياء</h2>
+            <p class="mt-2 text-stone-500 max-w-3xl mx-auto">
+                An interactive guide to the fundamental properties of life and the levels of biological organization.
+                <br>
+                دليل تفاعلي للخصائص الأساسية للحياة ومستويات التنظيم البيولوجي.
+            </p>
+        </header>
+
+        <nav class="flex justify-center mb-8 bg-stone-200/50 rounded-lg p-1 max-w-md mx-auto">
+            <button id="nav-properties" class="nav-btn w-1/2 p-2 rounded-md active">
+                <span class="font-english">Properties of Life</span>
+                <span class="block">خصائص الحياة</span>
+            </button>
+            <button id="nav-levels" class="nav-btn w-1/2 p-2 rounded-md">
+                <span class="font-english">Levels of Organization</span>
+                <span class="block">مستويات التنظيم</span>
+            </button>
+        </nav>
+
+        <main>
+            <section id="properties-section">
+                <div class="text-center mb-8">
+                    <p class="text-lg text-stone-600 max-w-4xl mx-auto">
+                        All living organisms share several key characteristics that serve to define life. Click on each property below to learn more about it.
+                        <br>
+                        تشترك جميع الكائنات الحية في العديد من الخصائص الرئيسية التي تعمل على تعريف الحياة. انقر على كل خاصية أدناه لمعرفة المزيد عنها.
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div class="md:col-span-4 lg:col-span-3">
+                        <div id="properties-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-4">
+                        </div>
+                    </div>
+                    <div class="md:col-span-8 lg:col-span-9">
+                        <div id="properties-details" class="bg-white p-6 rounded-lg shadow-md min-h-[300px] border border-stone-200">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="levels-section" class="hidden">
+                 <div class="text-center mb-8">
+                    <p class="text-lg text-stone-600 max-w-4xl mx-auto">
+                        Living things are highly organized in a hierarchical structure. Explore the levels of organization, from the smallest building blocks to the entire planet.
+                        <br>
+                        الكائنات الحية منظمة للغاية في هيكل هرمي. استكشف مستويات التنظيم، من أصغر وحدات البناء إلى الكوكب بأكمله.
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div id="levels-hierarchy" class="md:col-span-4 lg:col-span-3 flex flex-col items-center space-y-2 overflow-y-auto max-h-[80vh] p-2">
+                    </div>
+                    <div class="md:col-span-8 lg:col-span-9">
+                        <div id="levels-details" class="bg-white p-6 rounded-lg shadow-md min-h-[300px] border border-stone-200">
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const propertiesData = [
+            { id: 'order', icon: '🧬', en: 'Order', ar: 'التنظيم' , desc_en: 'All living organisms are complex and made of one or more cells. This highly organized structure is a key property of life.', desc_ar: 'جميع الكائنات الحية معقدة وتتكون من خلية واحدة أو أكثر. هذا الهيكل المنظم للغاية هو خاصية أساسية للحياة.'},
+            { id: 'sensitivity', icon: '反応', en: 'Response to Stimuli', ar: 'الحساسية', desc_en: 'Organisms respond to diverse stimuli. For example, plants bend toward light (phototaxis) and bacteria move toward chemicals (chemotaxis).', desc_ar: 'تستجيب الكائنات الحية للمنبهات المتنوعة. على سبيل المثال، تنحني النباتات نحو الضوء (الانتحاء الضوئي) وتتحرك البكتيريا نحو المواد الكيميائية (الانجذاب الكيميائي).'},
+            { id: 'reproduction', icon: '🔄', en: 'Reproduction', ar: 'التكاثر', desc_en: 'Living things reproduce to create new organisms. Genes containing DNA are passed to offspring, ensuring they belong to the same species.', desc_ar: 'تتكاثر الكائنات الحية لإنشاء كائنات جديدة. تنتقل الجينات التي تحتوي على الحمض النووي (DNA) إلى النسل، مما يضمن انتماءهم إلى نفس النوع.'},
+            { id: 'growth', icon: '📈', en: 'Growth & Development', ar: 'النمو والتطور', desc_en: 'Organisms grow and develop based on instructions coded by their genes, ensuring the young exhibit characteristics of their parents.', desc_ar: 'تنمو الكائنات الحية وتتطور بناءً على تعليمات مشفرة بواسطة جيناتها، مما يضمن أن يظهر الصغار خصائص والديهم.'},
+            { id: 'regulation', icon: '⚙️', en: 'Regulation', ar: 'التنظيم الوظيفي', desc_en: 'Organisms have complex regulatory mechanisms to coordinate internal functions, like nutrient transport and blood flow, to cope with environmental stresses.', desc_ar: 'تمتلك الكائنات الحية آليات تنظيمية معقدة لتنسيق الوظائف الداخلية، مثل نقل العناصر الغذائية وتدفق الدم، للتعامل مع الضغوط البيئية.'},
+            { id: 'homeostasis', icon: '⚖️', en: 'Homeostasis', ar: 'التوازن', desc_en: 'Meaning "steady state," this is the ability to maintain constant internal conditions (e.g., temperature, pH) despite environmental changes.', desc_ar: 'تعني "الحالة المستقرة"، وهي القدرة على الحفاظ على ظروف داخلية ثابتة (مثل درجة الحرارة ودرجة الحموضة) على الرغم من التغيرات البيئية.'},
+            { id: 'energy', icon: '⚡️', en: 'Energy Processing', ar: 'معالجة الطاقة', desc_en: 'All organisms use a source of energy for their metabolic activities. Some capture energy from the sun, while others consume other organisms.', desc_ar: 'تستخدم جميع الكائنات الحية مصدرًا للطاقة لأنشطتها الأيضية. بعضها يلتقط الطاقة من الشمس، بينما يستهلك البعض الآخر كائنات أخرى.'},
+        ];
+
+        const levelsData = [
+            { id: 'organelles', en: 'Organelles', ar: 'العضيات', desc_en: 'Small structures that exist within cells and perform specific functions. The nucleus is an example.', desc_ar: 'تراكيب صغيرة توجد داخل الخلايا وتؤدي وظائف محددة. النواة هي مثال على ذلك.' },
+            { id: 'cells', en: 'Cells', ar: 'الخلايا', desc_en: 'The basic unit of life. All organisms are composed of one or more cells. Example: Human blood cells.', desc_ar: 'الوحدة الأساسية للحياة. تتكون جميع الكائنات الحية من خلية واحدة أو أكثر. مثال: خلايا الدم البشرية.' },
+            { id: 'tissues', en: 'Tissues', ar: 'الأنسجة', desc_en: 'In multicellular organisms, tissues are groups of similar cells that work together to perform a specific function. Example: Human skin tissue.', desc_ar: 'في الكائنات متعددة الخلايا، الأنسجة هي مجموعات من الخلايا المتشابهة التي تعمل معًا لأداء وظيفة محددة. مثال: نسيج الجلد البشري.' },
+            { id: 'organs', en: 'Organs & Organ Systems', ar: 'الأعضاء والأجهزة', desc_en: 'Organs are collections of tissues grouped together based on a common function. Organs work together in organ systems. Example: The stomach is an organ in the digestive system.', desc_ar: 'الأعضاء هي مجموعات من الأنسجة مجمعة معًا بناءً على وظيفة مشتركة. تعمل الأعضاء معًا في أجهزة عضوية. مثال: المعدة هي عضو في الجهاز الهضمي.' },
+            { id: 'organisms', en: 'Organisms, Populations, Communities', ar: 'الكائنات، التجمعات، المجتمعات', desc_en: 'An organism is an individual living being. A population is all individuals of a species in an area. A community is the sum of all populations in an area.', desc_ar: 'الكائن الحي هو كائن حي فردي. التجمع السكاني هو جميع أفراد نوع ما في منطقة ما. المجتمع هو مجموع كل التجمعات السكانية في منطقة ما.' },
+            { id: 'ecosystem', en: 'Ecosystem', ar: 'النظام البيئي', desc_en: 'An ecosystem consists of all the living things (biotic) in an area, along with the non-living (abiotic) parts of the environment like soil and water.', desc_ar: 'يتكون النظام البيئي من جميع الكائنات الحية (الحيوية) في منطقة ما، إلى جانب الأجزاء غير الحية (اللاأحيائية) من البيئة مثل التربة والماء.' },
+            { id: 'biosphere', en: 'The Biosphere', ar: 'المحيط الحيوي', desc_en: 'The highest level of organization. It is the collection of all ecosystems on Earth, representing all zones of life.', desc_ar: 'أعلى مستوى من التنظيم. وهو مجموعة كل النظم البيئية على الأرض، ويمثل جميع مناطق الحياة.' },
+        ];
+        
+        const navProperties = document.getElementById('nav-properties');
+        const navLevels = document.getElementById('nav-levels');
+        const propertiesSection = document.getElementById('properties-section');
+        const levelsSection = document.getElementById('levels-section');
+
+        const propertiesGrid = document.getElementById('properties-grid');
+        const propertiesDetails = document.getElementById('properties-details');
+        
+        const levelsHierarchy = document.getElementById('levels-hierarchy');
+        const levelsDetails = document.getElementById('levels-details');
+
+        function setupNavigation() {
+            navProperties.addEventListener('click', () => {
+                navProperties.classList.add('active');
+                navLevels.classList.remove('active');
+                propertiesSection.classList.remove('hidden');
+                levelsSection.classList.add('hidden');
+            });
+
+            navLevels.addEventListener('click', () => {
+                navLevels.classList.add('active');
+                navProperties.classList.remove('active');
+                levelsSection.classList.remove('hidden');
+                propertiesSection.classList.add('hidden');
+            });
+        }
+        
+        function displayPropertyDetails(propertyId) {
+            const prop = propertiesData.find(p => p.id === propertyId);
+            propertiesDetails.innerHTML = `
+                <div class="flex items-center mb-4">
+                    <span class="text-4xl mr-4">${prop.icon}</span>
+                    <div>
+                        <h3 class="text-2xl font-bold text-stone-800 font-english">${prop.en}</h3>
+                        <h4 class="text-xl font-semibold text-stone-700">${prop.ar}</h4>
+                    </div>
+                </div>
+                <div dir="ltr" class="font-english text-stone-600 mb-4 text-lg">${prop.desc_en}</div>
+                <div dir="rtl" class="text-stone-600 text-lg">${prop.desc_ar}</div>
+            `;
+            
+            document.querySelectorAll('.content-card').forEach(card => {
+                card.classList.remove('active');
+                if (card.dataset.id === propertyId) {
+                    card.classList.add('active');
+                }
+            });
+        }
+        
+        function populateProperties() {
+            propertiesData.forEach(prop => {
+                const card = document.createElement('div');
+                card.className = 'content-card bg-white p-3 rounded-lg shadow-sm border-2 border-transparent text-center';
+                card.dataset.id = prop.id;
+                card.innerHTML = `
+                    <div class="text-3xl mb-2">${prop.icon}</div>
+                    <div class="font-semibold font-english text-sm">${prop.en}</div>
+                    <div class="text-stone-600 text-sm">${prop.ar}</div>
+                `;
+                card.addEventListener('click', () => displayPropertyDetails(prop.id));
+                propertiesGrid.appendChild(card);
+            });
+            displayPropertyDetails(propertiesData[0].id);
+        }
+        
+        function displayLevelDetails(levelId) {
+            const level = levelsData.find(l => l.id === levelId);
+            levelsDetails.innerHTML = `
+                <h3 class="text-2xl font-bold text-stone-800 font-english">${level.en}</h3>
+                <h4 class="text-xl font-semibold text-stone-700 mb-4">${level.ar}</h4>
+                <div dir="ltr" class="font-english text-stone-600 mb-4 text-lg">${level.desc_en}</div>
+                <div dir="rtl" class="text-stone-600 text-lg">${level.desc_ar}</div>
+            `;
+            
+            document.querySelectorAll('.level-card').forEach(card => {
+                card.classList.remove('active');
+                if (card.dataset.id === levelId) {
+                    card.classList.add('active');
+                }
+            });
+        }
+
+        function populateLevels() {
+            levelsData.forEach((level, index) => {
+                const card = document.createElement('div');
+                card.className = 'level-card w-full bg-white p-3 rounded-lg shadow-sm border-2 border-transparent text-center';
+                card.dataset.id = level.id;
+                card.innerHTML = `
+                    <div class="font-bold font-english">${level.en}</div>
+                    <div class="text-stone-600">${level.ar}</div>
+                `;
+                card.addEventListener('click', () => displayLevelDetails(level.id));
+                levelsHierarchy.appendChild(card);
+                
+                if (index < levelsData.length - 1) {
+                    const connector = document.createElement('div');
+                    connector.className = 'hierarchy-connector';
+                    levelsHierarchy.appendChild(connector);
+                }
+            });
+            displayLevelDetails(levelsData[0].id);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupNavigation();
+            populateProperties();
+            populateLevels();
+        });
+    </script>
+</body>
+</html>
