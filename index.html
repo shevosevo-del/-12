@@ -1,52 +1,384 @@
-function renderQuiz() {
-  const container = document.getElementById('quiz-container');
-  container.innerHTML = '';
-  quizData.questions.forEach(q => {
-    const qDiv = document.createElement('div');
-    qDiv.classList.add('mb-6', 'p-4', 'border', 'rounded', 'bg-stone-50');
-    qDiv.innerHTML = `<h3 class="font-bold mb-2">${q.questionNumber}. ${q.question}</h3>`;
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ملخص محاضرات الأحياء</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Academic Calm -->
+    <!-- Application Structure Plan: A single-page application featuring a fixed vertical sidebar for direct navigation to key topics and a main content area that displays one section at a time. This is supplemented by 'Next' and 'Previous' buttons for a sequential, step-by-step learning experience. This dual-navigation structure was chosen because it caters to different learning styles: users can either explore topics freely or follow a structured, lecture-like path, making complex biological concepts easier to digest. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Key biological concepts (Properties of Life, Levels of Organization). Goal: Inform/Organize. Viz/Presentation: Styled HTML cards and a CSS-based vertical diagram. Interaction: None. Justification: Provides clear, scannable information and visually represents hierarchy without the overhead of a graphing library.
+        - Report Info: Comparative data (Prokaryotic vs. Eukaryotic, Animal vs. Plant cells). Goal: Compare. Viz/Presentation: A two-column interactive layout controlled by JavaScript and a simple Chart.js bar chart for cell size comparison. Interaction: Buttons to toggle between comparison views, tooltips on the chart. Justification: An interactive layout is more engaging and mobile-friendly than a static table. A bar chart is the ideal visualization for comparing a single quantitative metric like size.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .sidebar-link.active { background-color: #0369a1; color: white; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
 
-    const buttons = [];
-    q.answerOptions.forEach((opt, idx) => {
-      const btn = document.createElement('button');
-      btn.className = 'block w-full text-left mb-2 p-2 rounded bg-stone-200 hover:bg-sky-200 transition-colors';
-      btn.textContent = opt.text;
-      
-      // هنا تم تعديل السطر لضبط سمة data-is-correct
-      btn.dataset.isCorrect = opt.isCorrect;
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-full md:w-64 bg-stone-100 p-4 md:p-6 shadow-lg fixed bottom-0 md:relative md:min-h-screen z-20">
+            <h1 class="text-2xl font-bold text-sky-800 mb-6 hidden md:block">مادة الأحياء (Biology)</h1>
+            <nav id="nav-menu" class="flex md:flex-col justify-around md:justify-start md:space-y-2">
+                <!-- Navigation links will be inserted here by JS -->
+            </nav>
+        </aside>
 
-      btn.addEventListener('click', () => {
-        buttons.forEach(b => b.disabled = true);
-        if (opt.isCorrect) {
-          btn.style.backgroundColor = 'green';
-          btn.style.color = 'white';
-        } else {
-          btn.style.backgroundColor = 'red';
-          btn.style.color = 'white';
-          
-          // هنا تم تعديل السطر للبحث عن الزر الصحيح باستخدام السمة الجديدة
-          const correctBtn = buttons.find(b => b.dataset.isCorrect === 'true');
-          if (correctBtn) {
-            correctBtn.style.backgroundColor = 'green';
-            correctBtn.style.color = 'white';
-          }
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8 pb-24 md:pb-8">
+            <div id="content-container">
+                <!-- Content sections will be inserted here by JS -->
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="fixed bottom-0 left-0 w-full bg-white shadow-md p-4 flex justify-between items-center z-10 md:relative md:mt-8 md:bg-transparent md:shadow-none md:p-0">
+                <button id="prevBtn" class="bg-sky-600 text-white py-2 px-6 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-300">
+                    <span class="hidden md:inline">السابق (Previous)</span>
+                    <span class="md:hidden">&rarr;</span>
+                </button>
+                <span id="page-indicator" class="text-sm font-semibold text-gray-600"></span>
+                <button id="nextBtn" class="bg-sky-600 text-white py-2 px-6 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-300">
+                    <span class="hidden md:inline">التالي (Next)</span>
+                    <span class="md:hidden">&larr;</span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const sectionsData = [
+            {
+                title: 'مقدمة في علم الأحياء',
+                id: 'introduction',
+                content: `
+                    <div class="bg-white p-8 rounded-xl shadow-md animate-fade-in">
+                        <h2 class="text-3xl font-bold text-sky-800 mb-4">Chapter 1: Introduction to Living Organisms (مقدمة في الكائنات الحية)</h2>
+                        <p class="text-lg text-stone-600 mb-2">مرحباً بك في ملخص مادة علم الأحياء للمستوى الأول. (Welcome to the summary of the Level 1 Biology course).</p>
+                        <p class="text-md text-stone-500">تم إعداد هذا الملخص التفاعلي لتسهيل استعراض وفهم المحاضرات الأساسية. (This interactive summary has been prepared to facilitate the review and understanding of the core lectures).</p>
+                        <div class="mt-6 border-t pt-4">
+                            <p class="font-semibold">by: mohamed hossam eldin</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: 'خصائص الحياة',
+                id: 'properties-of-life',
+                content: `
+                    <div class="bg-white p-8 rounded-xl shadow-md animate-fade-in">
+                        <h2 class="text-3xl font-bold text-sky-800 mb-6">Properties of Life (خصائص الحياة)</h2>
+                        <p class="text-lg text-stone-600 mb-8">All living organisms share several key characteristics or functions. When viewed together, these serve to define life. (تتشارك جميع الكائنات الحية في العديد من الخصائص أو الوظائف الرئيسية. عند النظر إليها مجتمعة، فإنها تعمل على تعريف الحياة).</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">1. Order (التنظيم)</h3>
+                                <p>Organisms are highly organized, coordinated structures that consist of one or more cells. (الكائنات الحية هي هياكل منظمة ومنسقة للغاية تتكون من خلية واحدة أو أكثر).</p>
+                            </div>
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">2. Sensitivity (الاستجابة للمؤثرات)</h3>
+                                <p>Organisms respond to diverse stimuli. For example, plants can bend toward a source of light. (تستجيب الكائنات الحية لمؤثرات متنوعة. على سبيل المثال، يمكن للنباتات أن تنحني نحو مصدر الضوء).</p>
+                            </div>
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">3. Reproduction (التكاثر)</h3>
+                                <p>Single-celled and multicellular organisms reproduce to pass on their genetic material (DNA). (تتكاثر الكائنات وحيدة الخلية ومتعددة الخلايا لنقل مادتها الوراثية).</p>
+                            </div>
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">4. Growth and Development (النمو والتطور)</h3>
+                                <p>Organisms grow and develop following specific instructions coded for by their genes. (تنمو الكائنات وتتطور وفقًا لتعليمات محددة مشفرة بواسطة جيناتها).</p>
+                            </div>
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">5. Regulation (التنظيم الداخلي)</h3>
+                                <p>Organisms require multiple regulatory mechanisms to coordinate internal functions, like nutrient transport. (تتطلب الكائنات آليات تنظيمية متعددة لتنسيق الوظائف الداخلية، مثل نقل العناصر الغذائية).</p>
+                            </div>
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">6. Homeostasis (التوازن)</h3>
+                                <p>The ability of an organism to maintain constant internal conditions, like temperature and pH. (قدرة الكائن الحي على الحفاظ على ظروف داخلية ثابتة، مثل درجة الحرارة ودرجة الحموضة).</p>
+                            </div>
+                             <div class="border border-stone-200 p-4 rounded-lg bg-stone-50 col-span-1 md:col-span-2 lg:col-span-3">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">7. Energy Processing (معالجة الطاقة)</h3>
+                                <p>All organisms use a source of energy for their metabolic activities. (تستخدم جميع الكائنات الحية مصدرًا للطاقة لأنشطتها الأيضية).</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: 'مستويات التنظيم',
+                id: 'organization-levels',
+                content: `
+                    <div class="bg-white p-8 rounded-xl shadow-md animate-fade-in">
+                        <h2 class="text-3xl font-bold text-sky-800 mb-6">Structured Hierarchy of Life (التسلسل الهرمي للحياة)</h2>
+                        <p class="text-lg text-stone-600 mb-8">Living things are highly organized in a hierarchical fashion, from the smallest building blocks to the entire planet. (الكائنات الحية منظمة للغاية بطريقة هرمية، من أصغر وحدات البناء إلى الكوكب بأسره).</p>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Atoms & Molecules (ذرات وجزيئات):</strong> The chemical building blocks of all matter. (اللبنات الكيميائية لكل المواد).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Organelles (عضيات):</strong> Components of cells that perform specific functions. (مكونات الخلايا التي تؤدي وظائف محددة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Cells (خلايا):</strong> The fundamental unit of life. (الوحدة الأساسية للحياة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Tissues (أنسجة):</strong> Groups of similar cells carrying out similar functions. (مجموعات من الخلايا المتشابهة تؤدي وظائف متشابهة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Organs & Organ Systems (أعضاء وأجهزة):</strong> Body parts that perform a specific function. (أجزاء الجسم التي تؤدي وظيفة محددة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Organisms (كائنات حية):</strong> Individual living entities. (كيانات حية فردية).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Populations (جماعات):</strong> All individuals of a species living within a specific area. (جميع أفراد النوع الذين يعيشون في منطقة معينة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Communities (مجتمعات):</strong> The sum of populations inhabiting a particular area. (مجموع الجماعات التي تسكن منطقة معينة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Ecosystem (نظام بيئي):</strong> All living things in an area, along with the non-living parts of the environment. (كل الكائنات الحية في منطقة ما، إلى جانب الأجزاء غير الحية من البيئة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Biosphere (المحيط الحيوي):</strong> The collection of all ecosystems on Earth. (مجموعة كل النظم البيئية على الأرض).</div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: 'أنواع الخلايا',
+                id: 'cell-types',
+                content: `
+                    <div class="bg-white p-8 rounded-xl shadow-md animate-fade-in">
+                        <h2 class="text-3xl font-bold text-sky-800 mb-4">Chapter 2: Cell Types (أنواع الخلايا)</h2>
+                        <p class="text-lg text-stone-600 mb-6">This section covers the major differences between the main types of cells. (يغطي هذا القسم الاختلافات الرئيسية بين الأنواع الرئيسية للخلايا).</p>
+                        <div class="flex justify-center gap-4 mb-8">
+                            <button id="prok-euk-btn" class="cell-type-btn bg-sky-600 text-white py-2 px-5 rounded-lg">Prokaryotic vs Eukaryotic</button>
+                            <button id="animal-plant-btn" class="cell-type-btn bg-stone-200 text-stone-700 py-2 px-5 rounded-lg">Animal vs Plant</button>
+                        </div>
+                        <div id="cell-comparison-content">
+                            <!-- Comparison content will be loaded here -->
+                        </div>
+                    </div>
+                `
+            }
+        ];
+
+        const comparisonContent = {
+            prokEuk: `
+                <h3 class="text-2xl font-bold text-center mb-6">Prokaryotic vs Eukaryotic Cells (الخلايا بدائية النواة مقابل حقيقية النواة)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-6 rounded-lg bg-stone-50 border border-stone-200">
+                        <h4 class="text-xl font-bold mb-3 text-sky-700">Prokaryotes (بدائيات النواة)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Nucleus (النواة):</strong> No true nucleus (Nucleoid region). (لا توجد نواة حقيقية).</li>
+                            <li><strong>DNA (الحمض النووي):</strong> Single, circular chromosome. (كروموسوم دائري واحد).</li>
+                            <li><strong>Organelles (العضيات):</strong> Lacks membrane-bound organelles. (تفتقر إلى العضيات الغشائية).</li>
+                            <li><strong>Ribosomes (الريبوسومات):</strong> 70S type.</li>
+                            <li><strong>Size (الحجم):</strong> Generally smaller (~ < 2µm). (أصغر بشكل عام).</li>
+                            <li><strong>Examples (أمثلة):</strong> Bacteria (البكتيريا).</li>
+                        </ul>
+                    </div>
+                    <div class="p-6 rounded-lg bg-stone-50 border border-stone-200">
+                        <h4 class="text-xl font-bold mb-3 text-sky-700">Eukaryotes (حقيقيات النواة)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Nucleus (النواة):</strong> True nucleus with a nuclear membrane. (نواة حقيقية بغشاء نووي).</li>
+                            <li><strong>DNA (الحمض النووي):</strong> Multiple linear chromosomes with histones. (كروموسومات خطية متعددة مع هستونات).</li>
+                            <li><strong>Organelles (العضيات):</strong> Has membrane-bound organelles. (لديها عضيات غشائية).</li>
+                            <li><strong>Ribosomes (الريبوسومات):</strong> 80S type.</li>
+                            <li><strong>Size (الحجم):</strong> Generally larger (~ 10-100µm). (أكبر بشكل عام).</li>
+                            <li><strong>Examples (أمثلة):</strong> Plants, animals, fungi (النباتات، الحيوانات، الفطريات).</li>
+                        </ul>
+                    </div>
+                </div>
+            `,
+            animalPlant: `
+                <h3 class="text-2xl font-bold text-center mb-6">Animal vs Plant Cells (الخلية الحيوانية مقابل الخلية النباتية)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="p-6 rounded-lg bg-stone-50 border border-stone-200">
+                        <h4 class="text-xl font-bold mb-3 text-sky-700">Animal Cell (خلية حيوانية)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Shape (الشكل):</strong> Irregular shape. (شكل غير منتظم).</li>
+                            <li><strong>Cell Wall (الجدار الخلوي):</strong> Absent. (غير موجود).</li>
+                            <li><strong>Vacuole (الفجوة العصارية):</strong> One or more small vacuoles. (فجوة صغيرة أو أكثر).</li>
+                            <li><strong>Centrosome (الجسم المركزي):</strong> Present. (موجود).</li>
+                            <li><strong>Plastids/Chloroplasts (البلاستيدات):</strong> Absent. (غير موجودة).</li>
+                            <li><strong>Nutrition Synthesis (تخليق الغذاء):</strong> Cannot synthesize its own nutrients. (لا تستطيع صنع غذائها).</li>
+                        </ul>
+                    </div>
+                    <div class="p-6 rounded-lg bg-stone-50 border border-stone-200">
+                        <h4 class="text-xl font-bold mb-3 text-sky-700">Plant Cell (خلية نباتية)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Shape (الشكل):</strong> Fixed, rectangular shape. (شكل ثابت ومستطيل).</li>
+                            <li><strong>Cell Wall (الجدار الخلوي):</strong> Present (made of cellulose). (موجود ومكون من السليلوز).</li>
+                            <li><strong>Vacuole (الفجوة العصارية):</strong> One large central vacuole. (فجوة مركزية كبيرة واحدة).</li>
+                            <li><strong>Centrosome (الجسم المركزي):</strong> Absent. (غير موجود).</li>
+                            <li><strong>Plastids/Chloroplasts (البلاستيدات):</strong> Present. (موجودة).</li>
+                            <li><strong>Nutrition Synthesis (تخليق الغذاء):</strong> Can synthesize its own nutrients. (تستطيع صنع غذائها).</li>
+                        </ul>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-bold text-center mb-4">Cell Size Comparison (مقارنة حجم الخلية)</h3>
+                <div class="chart-container">
+                    <canvas id="cellSizeChart"></canvas>
+                </div>
+            `
+        };
+
+        let currentPage = 0;
+        const navMenu = document.getElementById('nav-menu');
+        const contentContainer = document.getElementById('content-container');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageIndicator = document.getElementById('page-indicator');
+
+        function renderApp() {
+            navMenu.innerHTML = '';
+            contentContainer.innerHTML = '';
+
+            sectionsData.forEach((section, index) => {
+                navMenu.innerHTML += `<a href="#" class="sidebar-link text-lg text-stone-600 hover:text-sky-800 p-2 rounded-md transition-colors" data-index="${index}">${section.title}</a>`;
+                contentContainer.innerHTML += `<section id="${section.id}" class="content-section" data-index="${index}">${section.content}</section>`;
+            });
+
+            updatePage();
+            addNavListeners();
         }
-        const rationaleDiv = document.createElement('div');
-        rationaleDiv.className = 'mt-2 text-sm text-gray-700';
-        rationaleDiv.textContent = `Explanation: ${opt.rationale}`;
-        qDiv.appendChild(rationaleDiv);
-      });
-      qDiv.appendChild(btn);
-      buttons.push(btn);
-    });
 
-    if (q.hint) {
-      const hintDiv = document.createElement('div');
-      hintDiv.className = 'mt-2 text-sm text-gray-600';
-      hintDiv.textContent = `Hint: ${q.hint}`;
-      qDiv.appendChild(hintDiv);
-    }
+        function updatePage() {
+            document.querySelectorAll('.content-section').forEach((section, index) => {
+                section.classList.toggle('active', index === currentPage);
+            });
 
-    container.appendChild(qDiv);
-  });
-}
+            document.querySelectorAll('.sidebar-link').forEach((link, index) => {
+                link.classList.toggle('active', index === currentPage);
+            });
+            
+            prevBtn.disabled = currentPage === 0;
+            nextBtn.disabled = currentPage === sectionsData.length - 1;
+
+            pageIndicator.textContent = `Page ${currentPage + 1} of ${sectionsData.length} (صفحة ${currentPage + 1} من ${sectionsData.length})`;
+
+            if (sectionsData[currentPage].id === 'cell-types') {
+                const cellComparisonContent = document.getElementById('cell-comparison-content');
+                if (cellComparisonContent && !cellComparisonContent.innerHTML) {
+                    loadComparisonContent('prokEuk');
+                }
+                addCellTypeButtonListeners();
+            }
+        }
+        
+        function addNavListeners() {
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentPage = parseInt(e.target.dataset.index);
+                    updatePage();
+                });
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 0) {
+                    currentPage--;
+                    updatePage();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentPage < sectionsData.length - 1) {
+                    currentPage++;
+                    updatePage();
+                }
+            });
+        }
+        
+        let chartInstance = null;
+        function loadComparisonContent(type) {
+            const container = document.getElementById('cell-comparison-content');
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+            container.innerHTML = comparisonContent[type];
+            if (type === 'animalPlant') {
+                renderCellSizeChart();
+            }
+        }
+
+        function addCellTypeButtonListeners() {
+            const prokEukBtn = document.getElementById('prok-euk-btn');
+            const animalPlantBtn = document.getElementById('animal-plant-btn');
+            const btns = [prokEukBtn, animalPlantBtn];
+
+            if (prokEukBtn) {
+                 prokEukBtn.addEventListener('click', () => {
+                    loadComparisonContent('prokEuk');
+                    prokEukBtn.classList.add('bg-sky-600', 'text-white');
+                    prokEukBtn.classList.remove('bg-stone-200', 'text-stone-700');
+                    animalPlantBtn.classList.add('bg-stone-200', 'text-stone-700');
+                    animalPlantBtn.classList.remove('bg-sky-600', 'text-white');
+                });
+            }
+           
+            if(animalPlantBtn) {
+                animalPlantBtn.addEventListener('click', () => {
+                    loadComparisonContent('animalPlant');
+                    animalPlantBtn.classList.add('bg-sky-600', 'text-white');
+                    animalPlantBtn.classList.remove('bg-stone-200', 'text-stone-700');
+                    prokEukBtn.classList.add('bg-stone-200', 'text-stone-700');
+                    prokEukBtn.classList.remove('bg-sky-600', 'text-white');
+                });
+            }
+        }
+
+        function renderCellSizeChart() {
+            const ctx = document.getElementById('cellSizeChart');
+            if (!ctx) return;
+            chartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Animal Cell (خلية حيوانية)', 'Plant Cell (خلية نباتية)'],
+                    datasets: [{
+                        label: 'Length (in micrometers - µm) - الطول (ميكرومتر)',
+                        data: [30, 100], 
+                        backgroundColor: [
+                            'rgba(56, 189, 248, 0.6)',
+                            'rgba(34, 197, 94, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(56, 189, 248, 1)',
+                            'rgba(34, 197, 94, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Max Length (µm) - الطول الأقصى'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = '';
+                                    if (context.label.includes('Animal')) {
+                                        label = 'Typical Range: 10-30 µm (النطاق النموذجي)';
+                                    } else {
+                                        label = 'Typical Range: 10-100 µm (النطاق النموذجي)';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', renderApp);
+    </script>
+</body>
+</html>
+
+
