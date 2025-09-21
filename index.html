@@ -3,273 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مستكشف مفاهيم علم الأحياء | Biology Concepts Explorer</title>
+    <title>ملخص محاضرات الأحياء</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&family=Readex+Pro:wght@400;600&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Warm Neutrals -->
-    <!-- Application Structure Plan: The application is structured into two main, switchable sections: "Properties of Life" and "Levels of Organization". This thematic separation allows users to focus on one core concept at a time, preventing information overload. The "Properties" section uses an interactive card grid, where clicking a card reveals detailed information, promoting active learning. The "Levels" section employs a visual, clickable hierarchy diagram, which is a more intuitive and effective way to teach structural relationships than a simple text list. This interactive, dual-theme structure was chosen to transform the passive, linear content of the lecture slides into an engaging, user-driven exploratory experience. -->
-    <!-- Visualization & Content Choices: Report Info: Definitions of 7 properties of life. Goal: Inform/Organize. Viz: Interactive card grid (HTML/CSS). Interaction: Click card to display details in a separate panel. Justification: Breaks down information into digestible chunks. | Report Info: Hierarchical levels of organization. Goal: Show Relationships/Organize. Viz: Clickable vertical diagram (HTML/CSS). Interaction: Click level to display its definition and context. Justification: Visually represents the hierarchy, making the concept of scale easier to grasp. All interactions are powered by vanilla JS to dynamically update content panels. -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Academic Calm -->
+    <!-- Application Structure Plan: A single-page application featuring a fixed vertical sidebar for direct navigation to key topics and a main content area that displays one section at a time. This is supplemented by 'Next' and 'Previous' buttons for a sequential, step-by-step learning experience. This dual-navigation structure was chosen because it caters to different learning styles: users can either explore topics freely or follow a structured, lecture-like path, making complex biological concepts easier to digest. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Key biological concepts (Properties of Life, Levels of Organization). Goal: Inform/Organize. Viz/Presentation: Styled HTML cards and a CSS-based vertical diagram. Interaction: None. Justification: Provides clear, scannable information and visually represents hierarchy without the overhead of a graphing library.
+        - Report Info: Comparative data (Prokaryotic vs. Eukaryotic, Animal vs. Plant cells). Goal: Compare. Viz/Presentation: A two-column interactive layout controlled by JavaScript and a simple Chart.js bar chart for cell size comparison. Interaction: Buttons to toggle between comparison views, tooltips on the chart. Justification: An interactive layout is more engaging and mobile-friendly than a static table. A bar chart is the ideal visualization for comparing a single quantitative metric like size.
+    -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background-color: #FDFBF8;
-            color: #4A4A4A;
-        }
-        .font-english {
-            font-family: 'Readex Pro', sans-serif;
-        }
-        .nav-btn {
-            transition: all 0.3s ease;
-        }
-        .nav-btn.active {
-            background-color: #8D7B68;
-            color: #FFFFFF;
-            font-weight: 700;
-        }
-        .nav-btn:not(.active):hover {
-            background-color: #E4E0DC;
-        }
-        .content-card, .level-card {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .content-card.active, .level-card.active {
-            border-color: #8D7B68;
-            background-color: #F5F2EF;
-            transform: translateY(-4px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-        .content-card:hover, .level-card:hover {
-            border-color: #A4907C;
-            transform: translateY(-2px);
-        }
-        .hierarchy-connector {
-            width: 2px;
-            background-color: #C8B6A6;
-            margin: -0.5rem auto;
-            height: 2rem;
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #F5F2EF;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #C8B6A6;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #A4907C;
-        }
+        body { font-family: 'Cairo', sans-serif; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .sidebar-link.active { background-color: #0369a1; color: white; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
     </style>
 </head>
-<body class="bg-stone-50">
-    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+<body class="bg-stone-50 text-stone-800">
 
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-stone-800 font-english">Biology Concepts Explorer</h1>
-            <h2 class="text-2xl md:text-3xl font-bold text-stone-700 mt-1">مستكشف مفاهيم علم الأحياء</h2>
-            <p class="mt-2 text-stone-500 max-w-3xl mx-auto">
-                An interactive guide to the fundamental properties of life and the levels of biological organization.
-                <br>
-                دليل تفاعلي للخصائص الأساسية للحياة ومستويات التنظيم البيولوجي.
-            </p>
-        </header>
-<nav class="flex justify-center mb-8 bg-stone-200/50 rounded-lg p-1 max-w-md mx-auto">
-    <a href="index.html" class="nav-btn w-1/2 p-2 rounded-md active">
-        الصفحة الرئيسية
-    </a>
-    <a href="lecture2.html" class="nav-btn w-1/2 p-2 rounded-md">
-        المحاضرة 2
-    </a>
-</nav>
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-full md:w-64 bg-stone-100 p-4 md:p-6 shadow-lg fixed bottom-0 md:relative md:min-h-screen z-20">
+            <h1 class="text-2xl font-bold text-sky-800 mb-6 hidden md:block">مادة الأحياء (Biology)</h1>
+            <nav id="nav-menu" class="flex md:flex-col justify-around md:justify-start md:space-y-2">
+                <!-- Navigation links will be inserted here by JS -->
+            </nav>
+        </aside>
 
-        <nav class="flex justify-center mb-8 bg-stone-200/50 rounded-lg p-1 max-w-md mx-auto">
-            <button id="nav-properties" class="nav-btn w-1/2 p-2 rounded-md active">
-                <span class="font-english">Properties of Life</span>
-                <span class="block">خصائص الحياة</span>
-            </button>
-            <button id="nav-levels" class="nav-btn w-1/2 p-2 rounded-md">
-                <span class="font-english">Levels of Organization</span>
-                <span class="block">مستويات التنظيم</span>
-            </button>
-        </nav>
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8 pb-24 md:pb-8">
+            <div id="content-container">
+                <!-- Content sections will be inserted here by JS -->
+            </div>
 
-        <main>
-            <section id="properties-section">
-                <div class="text-center mb-8">
-                    <p class="text-lg text-stone-600 max-w-4xl mx-auto">
-                        All living organisms share several key characteristics that serve to define life. Click on each property below to learn more about it.
-                        <br>
-                        تشترك جميع الكائنات الحية في العديد من الخصائص الرئيسية التي تعمل على تعريف الحياة. انقر على كل خاصية أدناه لمعرفة المزيد عنها.
-                    </p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <div class="md:col-span-4 lg:col-span-3">
-                        <div id="properties-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-4">
-                        </div>
-                    </div>
-                    <div class="md:col-span-8 lg:col-span-9">
-                        <div id="properties-details" class="bg-white p-6 rounded-lg shadow-md min-h-[300px] border border-stone-200">
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="levels-section" class="hidden">
-                 <div class="text-center mb-8">
-                    <p class="text-lg text-stone-600 max-w-4xl mx-auto">
-                        Living things are highly organized in a hierarchical structure. Explore the levels of organization, from the smallest building blocks to the entire planet.
-                        <br>
-                        الكائنات الحية منظمة للغاية في هيكل هرمي. استكشف مستويات التنظيم، من أصغر وحدات البناء إلى الكوكب بأكمله.
-                    </p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <div id="levels-hierarchy" class="md:col-span-4 lg:col-span-3 flex flex-col items-center space-y-2 overflow-y-auto max-h-[80vh] p-2">
-                    </div>
-                    <div class="md:col-span-8 lg:col-span-9">
-                        <div id="levels-details" class="bg-white p-6 rounded-lg shadow-md min-h-[300px] border border-stone-200">
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <!-- Navigation Buttons -->
+            <div class="fixed bottom-0 left-0 w-full bg-white shadow-md p-4 flex justify-between items-center z-10 md:relative md:mt-8 md:bg-transparent md:shadow-none md:p-0">
+                <button id="prevBtn" class="bg-sky-600 text-white py-2 px-6 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-300">
+                    <span class="hidden md:inline">السابق (Previous)</span>
+                    <span class="md:hidden">&rarr;</span>
+                </button>
+                <span id="page-indicator" class="text-sm font-semibold text-gray-600"></span>
+                <button id="nextBtn" class="bg-sky-600 text-white py-2 px-6 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-300">
+                    <span class="hidden md:inline">التالي (Next)</span>
+                    <span class="md:hidden">&larr;</span>
+                </button>
+            </div>
         </main>
     </div>
 
     <script>
-        const propertiesData = [
-            { id: 'order', icon: '🧬', en: 'Order', ar: 'التنظيم' , desc_en: 'All living organisms are complex and made of one or more cells. This highly organized structure is a key property of life.', desc_ar: 'جميع الكائنات الحية معقدة وتتكون من خلية واحدة أو أكثر. هذا الهيكل المنظم للغاية هو خاصية أساسية للحياة.'},
-            { id: 'sensitivity', icon: '反応', en: 'Response to Stimuli', ar: 'الحساسية', desc_en: 'Organisms respond to diverse stimuli. For example, plants bend toward light (phototaxis) and bacteria move toward chemicals (chemotaxis).', desc_ar: 'تستجيب الكائنات الحية للمنبهات المتنوعة. على سبيل المثال، تنحني النباتات نحو الضوء (الانتحاء الضوئي) وتتحرك البكتيريا نحو المواد الكيميائية (الانجذاب الكيميائي).'},
-            { id: 'reproduction', icon: '🔄', en: 'Reproduction', ar: 'التكاثر', desc_en: 'Living things reproduce to create new organisms. Genes containing DNA are passed to offspring, ensuring they belong to the same species.', desc_ar: 'تتكاثر الكائنات الحية لإنشاء كائنات جديدة. تنتقل الجينات التي تحتوي على الحمض النووي (DNA) إلى النسل، مما يضمن انتماءهم إلى نفس النوع.'},
-            { id: 'growth', icon: '📈', en: 'Growth & Development', ar: 'النمو والتطور', desc_en: 'Organisms grow and develop based on instructions coded by their genes, ensuring the young exhibit characteristics of their parents.', desc_ar: 'تنمو الكائنات الحية وتتطور بناءً على تعليمات مشفرة بواسطة جيناتها، مما يضمن أن يظهر الصغار خصائص والديهم.'},
-            { id: 'regulation', icon: '⚙️', en: 'Regulation', ar: 'التنظيم الوظيفي', desc_en: 'Organisms have complex regulatory mechanisms to coordinate internal functions, like nutrient transport and blood flow, to cope with environmental stresses.', desc_ar: 'تمتلك الكائنات الحية آليات تنظيمية معقدة لتنسيق الوظائف الداخلية، مثل نقل العناصر الغذائية وتدفق الدم، للتعامل مع الضغوط البيئية.'},
-            { id: 'homeostasis', icon: '⚖️', en: 'Homeostasis', ar: 'التوازن', desc_en: 'Meaning "steady state," this is the ability to maintain constant internal conditions (e.g., temperature, pH) despite environmental changes.', desc_ar: 'تعني "الحالة المستقرة"، وهي القدرة على الحفاظ على ظروف داخلية ثابتة (مثل درجة الحرارة ودرجة الحموضة) على الرغم من التغيرات البيئية.'},
-            { id: 'energy', icon: '⚡️', en: 'Energy Processing', ar: 'معالجة الطاقة', desc_en: 'All organisms use a source of energy for their metabolic activities. Some capture energy from the sun, while others consume other organisms.', desc_ar: 'تستخدم جميع الكائنات الحية مصدرًا للطاقة لأنشطتها الأيضية. بعضها يلتقط الطاقة من الشمس، بينما يستهلك البعض الآخر كائنات أخرى.'},
+        const sectionsData = [
+            {
+                title: 'مقدمة في علم الأحياء',
+                id: 'introduction',
+                content: `
+                    <div class="bg-white p-8 rounded-xl shadow-md animate-fade-in">
+                        <h2 class="text-3xl font-bold text-sky-800 mb-4">Chapter 1: Introduction to Living Organisms (مقدمة في الكائنات الحية)</h2>
+                        <p class="text-lg text-stone-600 mb-2">مرحباً بك في ملخص مادة علم الأحياء للمستوى الأول. (Welcome to the summary of the Level 1 Biology course).</p>
+                        <p class="text-md text-stone-500">تم إعداد هذا الملخص التفاعلي لتسهيل استعراض وفهم المحاضرات الأساسية. (This interactive summary has been prepared to facilitate the review and understanding of the core lectures).</p>
+                        <div class="mt-6 border-t pt-4">
+                            <p class="font-semibold">By Prof. Dr. Azza Abdel Aziz Abou Zeid</p>
+                            <p class="text-sm text-stone-500">Preparatory Nursing - May 2024</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: 'خصائص الحياة',
+                id: 'properties-of-life',
+                content: `
+                    <div class="bg-white p-8 rounded-xl shadow-md animate-fade-in">
+                        <h2 class="text-3xl font-bold text-sky-800 mb-6">Properties of Life (خصائص الحياة)</h2>
+                        <p class="text-lg text-stone-600 mb-8">All living organisms share several key characteristics or functions. When viewed together, these serve to define life. (تتشارك جميع الكائنات الحية في العديد من الخصائص أو الوظائف الرئيسية. عند النظر إليها مجتمعة، فإنها تعمل على تعريف الحياة).</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">1. Order (التنظيم)</h3>
+                                <p>Organisms are highly organized, coordinated structures that consist of one or more cells. (الكائنات الحية هي هياكل منظمة ومنسقة للغاية تتكون من خلية واحدة أو أكثر).</p>
+                            </div>
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">2. Sensitivity (الاستجابة للمؤثرات)</h3>
+                                <p>Organisms respond to diverse stimuli. For example, plants can bend toward a source of light. (تستجيب الكائنات الحية لمؤثرات متنوعة. على سبيل المثال، يمكن للنباتات أن تنحني نحو مصدر الضوء).</p>
+                            </div>
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">3. Reproduction (التكاثر)</h3>
+                                <p>Single-celled and multicellular organisms reproduce to pass on their genetic material (DNA). (تتكاثر الكائنات وحيدة الخلية ومتعددة الخلايا لنقل مادتها الوراثية).</p>
+                            </div>
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">4. Growth and Development (النمو والتطور)</h3>
+                                <p>Organisms grow and develop following specific instructions coded for by their genes. (تنمو الكائنات وتتطور وفقًا لتعليمات محددة مشفرة بواسطة جيناتها).</p>
+                            </div>
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">5. Regulation (التنظيم الداخلي)</h3>
+                                <p>Organisms require multiple regulatory mechanisms to coordinate internal functions, like nutrient transport. (تتطلب الكائنات آليات تنظيمية متعددة لتنسيق الوظائف الداخلية، مثل نقل العناصر الغذائية).</p>
+                            </div>
+                            <div class="border border-stone-200 p-4 rounded-lg bg-stone-50">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">6. Homeostasis (التوازن)</h3>
+                                <p>The ability of an organism to maintain constant internal conditions, like temperature and pH. (قدرة الكائن الحي على الحفاظ على ظروف داخلية ثابتة، مثل درجة الحرارة ودرجة الحموضة).</p>
+                            </div>
+                             <div class="border border-stone-200 p-4 rounded-lg bg-stone-50 col-span-1 md:col-span-2 lg:col-span-3">
+                                <h3 class="font-bold text-xl mb-2 text-sky-700">7. Energy Processing (معالجة الطاقة)</h3>
+                                <p>All organisms use a source of energy for their metabolic activities. (تستخدم جميع الكائنات الحية مصدرًا للطاقة لأنشطتها الأيضية).</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: 'مستويات التنظيم',
+                id: 'organization-levels',
+                content: `
+                    <div class="bg-white p-8 rounded-xl shadow-md animate-fade-in">
+                        <h2 class="text-3xl font-bold text-sky-800 mb-6">Structured Hierarchy of Life (التسلسل الهرمي للحياة)</h2>
+                        <p class="text-lg text-stone-600 mb-8">Living things are highly organized in a hierarchical fashion, from the smallest building blocks to the entire planet. (الكائنات الحية منظمة للغاية بطريقة هرمية، من أصغر وحدات البناء إلى الكوكب بأسره).</p>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Atoms & Molecules (ذرات وجزيئات):</strong> The chemical building blocks of all matter. (اللبنات الكيميائية لكل المواد).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Organelles (عضيات):</strong> Components of cells that perform specific functions. (مكونات الخلايا التي تؤدي وظائف محددة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Cells (خلايا):</strong> The fundamental unit of life. (الوحدة الأساسية للحياة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Tissues (أنسجة):</strong> Groups of similar cells carrying out similar functions. (مجموعات من الخلايا المتشابهة تؤدي وظائف متشابهة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Organs & Organ Systems (أعضاء وأجهزة):</strong> Body parts that perform a specific function. (أجزاء الجسم التي تؤدي وظيفة محددة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Organisms (كائنات حية):</strong> Individual living entities. (كيانات حية فردية).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Populations (جماعات):</strong> All individuals of a species living within a specific area. (جميع أفراد النوع الذين يعيشون في منطقة معينة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Communities (مجتمعات):</strong> The sum of populations inhabiting a particular area. (مجموع الجماعات التي تسكن منطقة معينة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Ecosystem (نظام بيئي):</strong> All living things in an area, along with the non-living parts of the environment. (كل الكائنات الحية في منطقة ما، إلى جانب الأجزاء غير الحية من البيئة).</div>
+                            <div class="p-4 bg-stone-50 rounded-lg border-l-4 border-sky-500"><strong>Biosphere (المحيط الحيوي):</strong> The collection of all ecosystems on Earth. (مجموعة كل النظم البيئية على الأرض).</div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: 'أنواع الخلايا',
+                id: 'cell-types',
+                content: `
+                    <div class="bg-white p-8 rounded-xl shadow-md animate-fade-in">
+                        <h2 class="text-3xl font-bold text-sky-800 mb-4">Chapter 2: Cell Types (أنواع الخلايا)</h2>
+                        <p class="text-lg text-stone-600 mb-6">This section covers the major differences between the main types of cells. (يغطي هذا القسم الاختلافات الرئيسية بين الأنواع الرئيسية للخلايا).</p>
+                        <div class="flex justify-center gap-4 mb-8">
+                            <button id="prok-euk-btn" class="cell-type-btn bg-sky-600 text-white py-2 px-5 rounded-lg">Prokaryotic vs Eukaryotic</button>
+                            <button id="animal-plant-btn" class="cell-type-btn bg-stone-200 text-stone-700 py-2 px-5 rounded-lg">Animal vs Plant</button>
+                        </div>
+                        <div id="cell-comparison-content">
+                            <!-- Comparison content will be loaded here -->
+                        </div>
+                    </div>
+                `
+            }
         ];
 
-        const levelsData = [
-            { id: 'organelles', en: 'Organelles', ar: 'العضيات', desc_en: 'Small structures that exist within cells and perform specific functions. The nucleus is an example.', desc_ar: 'تراكيب صغيرة توجد داخل الخلايا وتؤدي وظائف محددة. النواة هي مثال على ذلك.' },
-            { id: 'cells', en: 'Cells', ar: 'الخلايا', desc_en: 'The basic unit of life. All organisms are composed of one or more cells. Example: Human blood cells.', desc_ar: 'الوحدة الأساسية للحياة. تتكون جميع الكائنات الحية من خلية واحدة أو أكثر. مثال: خلايا الدم البشرية.' },
-            { id: 'tissues', en: 'Tissues', ar: 'الأنسجة', desc_en: 'In multicellular organisms, tissues are groups of similar cells that work together to perform a specific function. Example: Human skin tissue.', desc_ar: 'في الكائنات متعددة الخلايا، الأنسجة هي مجموعات من الخلايا المتشابهة التي تعمل معًا لأداء وظيفة محددة. مثال: نسيج الجلد البشري.' },
-            { id: 'organs', en: 'Organs & Organ Systems', ar: 'الأعضاء والأجهزة', desc_en: 'Organs are collections of tissues grouped together based on a common function. Organs work together in organ systems. Example: The stomach is an organ in the digestive system.', desc_ar: 'الأعضاء هي مجموعات من الأنسجة مجمعة معًا بناءً على وظيفة مشتركة. تعمل الأعضاء معًا في أجهزة عضوية. مثال: المعدة هي عضو في الجهاز الهضمي.' },
-            { id: 'organisms', en: 'Organisms, Populations, Communities', ar: 'الكائنات، التجمعات، المجتمعات', desc_en: 'An organism is an individual living being. A population is all individuals of a species in an area. A community is the sum of all populations in an area.', desc_ar: 'الكائن الحي هو كائن حي فردي. التجمع السكاني هو جميع أفراد نوع ما في منطقة ما. المجتمع هو مجموع كل التجمعات السكانية في منطقة ما.' },
-            { id: 'ecosystem', en: 'Ecosystem', ar: 'النظام البيئي', desc_en: 'An ecosystem consists of all the living things (biotic) in an area, along with the non-living (abiotic) parts of the environment like soil and water.', desc_ar: 'يتكون النظام البيئي من جميع الكائنات الحية (الحيوية) في منطقة ما، إلى جانب الأجزاء غير الحية (اللاأحيائية) من البيئة مثل التربة والماء.' },
-            { id: 'biosphere', en: 'The Biosphere', ar: 'المحيط الحيوي', desc_en: 'The highest level of organization. It is the collection of all ecosystems on Earth, representing all zones of life.', desc_ar: 'أعلى مستوى من التنظيم. وهو مجموعة كل النظم البيئية على الأرض، ويمثل جميع مناطق الحياة.' },
-        ];
-        
-        const navProperties = document.getElementById('nav-properties');
-        const navLevels = document.getElementById('nav-levels');
-        const propertiesSection = document.getElementById('properties-section');
-        const levelsSection = document.getElementById('levels-section');
-
-        const propertiesGrid = document.getElementById('properties-grid');
-        const propertiesDetails = document.getElementById('properties-details');
-        
-        const levelsHierarchy = document.getElementById('levels-hierarchy');
-        const levelsDetails = document.getElementById('levels-details');
-
-        function setupNavigation() {
-            navProperties.addEventListener('click', () => {
-                navProperties.classList.add('active');
-                navLevels.classList.remove('active');
-                propertiesSection.classList.remove('hidden');
-                levelsSection.classList.add('hidden');
-            });
-
-            navLevels.addEventListener('click', () => {
-                navLevels.classList.add('active');
-                navProperties.classList.remove('active');
-                levelsSection.classList.remove('hidden');
-                propertiesSection.classList.add('hidden');
-            });
-        }
-        
-        function displayPropertyDetails(propertyId) {
-            const prop = propertiesData.find(p => p.id === propertyId);
-            propertiesDetails.innerHTML = `
-                <div class="flex items-center mb-4">
-                    <span class="text-4xl mr-4">${prop.icon}</span>
-                    <div>
-                        <h3 class="text-2xl font-bold text-stone-800 font-english">${prop.en}</h3>
-                        <h4 class="text-xl font-semibold text-stone-700">${prop.ar}</h4>
+        const comparisonContent = {
+            prokEuk: `
+                <h3 class="text-2xl font-bold text-center mb-6">Prokaryotic vs Eukaryotic Cells (الخلايا بدائية النواة مقابل حقيقية النواة)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-6 rounded-lg bg-stone-50 border border-stone-200">
+                        <h4 class="text-xl font-bold mb-3 text-sky-700">Prokaryotes (بدائيات النواة)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Nucleus (النواة):</strong> No true nucleus (Nucleoid region). (لا توجد نواة حقيقية).</li>
+                            <li><strong>DNA (الحمض النووي):</strong> Single, circular chromosome. (كروموسوم دائري واحد).</li>
+                            <li><strong>Organelles (العضيات):</strong> Lacks membrane-bound organelles. (تفتقر إلى العضيات الغشائية).</li>
+                            <li><strong>Ribosomes (الريبوسومات):</strong> 70S type.</li>
+                            <li><strong>Size (الحجم):</strong> Generally smaller (~ < 2µm). (أصغر بشكل عام).</li>
+                            <li><strong>Examples (أمثلة):</strong> Bacteria (البكتيريا).</li>
+                        </ul>
+                    </div>
+                    <div class="p-6 rounded-lg bg-stone-50 border border-stone-200">
+                        <h4 class="text-xl font-bold mb-3 text-sky-700">Eukaryotes (حقيقيات النواة)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Nucleus (النواة):</strong> True nucleus with a nuclear membrane. (نواة حقيقية بغشاء نووي).</li>
+                            <li><strong>DNA (الحمض النووي):</strong> Multiple linear chromosomes with histones. (كروموسومات خطية متعددة مع هستونات).</li>
+                            <li><strong>Organelles (العضيات):</strong> Has membrane-bound organelles. (لديها عضيات غشائية).</li>
+                            <li><strong>Ribosomes (الريبوسومات):</strong> 80S type.</li>
+                            <li><strong>Size (الحجم):</strong> Generally larger (~ 10-100µm). (أكبر بشكل عام).</li>
+                            <li><strong>Examples (أمثلة):</strong> Plants, animals, fungi (النباتات، الحيوانات، الفطريات).</li>
+                        </ul>
                     </div>
                 </div>
-                <div dir="ltr" class="font-english text-stone-600 mb-4 text-lg">${prop.desc_en}</div>
-                <div dir="rtl" class="text-stone-600 text-lg">${prop.desc_ar}</div>
-            `;
+            `,
+            animalPlant: `
+                <h3 class="text-2xl font-bold text-center mb-6">Animal vs Plant Cells (الخلية الحيوانية مقابل الخلية النباتية)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="p-6 rounded-lg bg-stone-50 border border-stone-200">
+                        <h4 class="text-xl font-bold mb-3 text-sky-700">Animal Cell (خلية حيوانية)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Shape (الشكل):</strong> Irregular shape. (شكل غير منتظم).</li>
+                            <li><strong>Cell Wall (الجدار الخلوي):</strong> Absent. (غير موجود).</li>
+                            <li><strong>Vacuole (الفجوة العصارية):</strong> One or more small vacuoles. (فجوة صغيرة أو أكثر).</li>
+                            <li><strong>Centrosome (الجسم المركزي):</strong> Present. (موجود).</li>
+                            <li><strong>Plastids/Chloroplasts (البلاستيدات):</strong> Absent. (غير موجودة).</li>
+                            <li><strong>Nutrition Synthesis (تخليق الغذاء):</strong> Cannot synthesize its own nutrients. (لا تستطيع صنع غذائها).</li>
+                        </ul>
+                    </div>
+                    <div class="p-6 rounded-lg bg-stone-50 border border-stone-200">
+                        <h4 class="text-xl font-bold mb-3 text-sky-700">Plant Cell (خلية نباتية)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Shape (الشكل):</strong> Fixed, rectangular shape. (شكل ثابت ومستطيل).</li>
+                            <li><strong>Cell Wall (الجدار الخلوي):</strong> Present (made of cellulose). (موجود ومكون من السليلوز).</li>
+                            <li><strong>Vacuole (الفجوة العصارية):</strong> One large central vacuole. (فجوة مركزية كبيرة واحدة).</li>
+                            <li><strong>Centrosome (الجسم المركزي):</strong> Absent. (غير موجود).</li>
+                            <li><strong>Plastids/Chloroplasts (البلاستيدات):</strong> Present. (موجودة).</li>
+                            <li><strong>Nutrition Synthesis (تخليق الغذاء):</strong> Can synthesize its own nutrients. (تستطيع صنع غذائها).</li>
+                        </ul>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-bold text-center mb-4">Cell Size Comparison (مقارنة حجم الخلية)</h3>
+                <div class="chart-container">
+                    <canvas id="cellSizeChart"></canvas>
+                </div>
+            `
+        };
+
+        let currentPage = 0;
+        const navMenu = document.getElementById('nav-menu');
+        const contentContainer = document.getElementById('content-container');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageIndicator = document.getElementById('page-indicator');
+
+        function renderApp() {
+            navMenu.innerHTML = '';
+            contentContainer.innerHTML = '';
+
+            sectionsData.forEach((section, index) => {
+                navMenu.innerHTML += `<a href="#" class="sidebar-link text-lg text-stone-600 hover:text-sky-800 p-2 rounded-md transition-colors" data-index="${index}">${section.title}</a>`;
+                contentContainer.innerHTML += `<section id="${section.id}" class="content-section" data-index="${index}">${section.content}</section>`;
+            });
+
+            updatePage();
+            addNavListeners();
+        }
+
+        function updatePage() {
+            document.querySelectorAll('.content-section').forEach((section, index) => {
+                section.classList.toggle('active', index === currentPage);
+            });
+
+            document.querySelectorAll('.sidebar-link').forEach((link, index) => {
+                link.classList.toggle('active', index === currentPage);
+            });
             
-            document.querySelectorAll('.content-card').forEach(card => {
-                card.classList.remove('active');
-                if (card.dataset.id === propertyId) {
-                    card.classList.add('active');
+            prevBtn.disabled = currentPage === 0;
+            nextBtn.disabled = currentPage === sectionsData.length - 1;
+
+            pageIndicator.textContent = `Page ${currentPage + 1} of ${sectionsData.length} (صفحة ${currentPage + 1} من ${sectionsData.length})`;
+
+            if (sectionsData[currentPage].id === 'cell-types') {
+                const cellComparisonContent = document.getElementById('cell-comparison-content');
+                if (cellComparisonContent && !cellComparisonContent.innerHTML) {
+                    loadComparisonContent('prokEuk');
+                }
+                addCellTypeButtonListeners();
+            }
+        }
+        
+        function addNavListeners() {
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentPage = parseInt(e.target.dataset.index);
+                    updatePage();
+                });
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 0) {
+                    currentPage--;
+                    updatePage();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentPage < sectionsData.length - 1) {
+                    currentPage++;
+                    updatePage();
                 }
             });
         }
         
-        function populateProperties() {
-            propertiesData.forEach(prop => {
-                const card = document.createElement('div');
-                card.className = 'content-card bg-white p-3 rounded-lg shadow-sm border-2 border-transparent text-center';
-                card.dataset.id = prop.id;
-                card.innerHTML = `
-                    <div class="text-3xl mb-2">${prop.icon}</div>
-                    <div class="font-semibold font-english text-sm">${prop.en}</div>
-                    <div class="text-stone-600 text-sm">${prop.ar}</div>
-                `;
-                card.addEventListener('click', () => displayPropertyDetails(prop.id));
-                propertiesGrid.appendChild(card);
-            });
-            displayPropertyDetails(propertiesData[0].id);
+        let chartInstance = null;
+        function loadComparisonContent(type) {
+            const container = document.getElementById('cell-comparison-content');
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+            container.innerHTML = comparisonContent[type];
+            if (type === 'animalPlant') {
+                renderCellSizeChart();
+            }
         }
-        
-        function displayLevelDetails(levelId) {
-            const level = levelsData.find(l => l.id === levelId);
-            levelsDetails.innerHTML = `
-                <h3 class="text-2xl font-bold text-stone-800 font-english">${level.en}</h3>
-                <h4 class="text-xl font-semibold text-stone-700 mb-4">${level.ar}</h4>
-                <div dir="ltr" class="font-english text-stone-600 mb-4 text-lg">${level.desc_en}</div>
-                <div dir="rtl" class="text-stone-600 text-lg">${level.desc_ar}</div>
-            `;
-            
-            document.querySelectorAll('.level-card').forEach(card => {
-                card.classList.remove('active');
-                if (card.dataset.id === levelId) {
-                    card.classList.add('active');
+
+        function addCellTypeButtonListeners() {
+            const prokEukBtn = document.getElementById('prok-euk-btn');
+            const animalPlantBtn = document.getElementById('animal-plant-btn');
+            const btns = [prokEukBtn, animalPlantBtn];
+
+            if (prokEukBtn) {
+                 prokEukBtn.addEventListener('click', () => {
+                    loadComparisonContent('prokEuk');
+                    prokEukBtn.classList.add('bg-sky-600', 'text-white');
+                    prokEukBtn.classList.remove('bg-stone-200', 'text-stone-700');
+                    animalPlantBtn.classList.add('bg-stone-200', 'text-stone-700');
+                    animalPlantBtn.classList.remove('bg-sky-600', 'text-white');
+                });
+            }
+           
+            if(animalPlantBtn) {
+                animalPlantBtn.addEventListener('click', () => {
+                    loadComparisonContent('animalPlant');
+                    animalPlantBtn.classList.add('bg-sky-600', 'text-white');
+                    animalPlantBtn.classList.remove('bg-stone-200', 'text-stone-700');
+                    prokEukBtn.classList.add('bg-stone-200', 'text-stone-700');
+                    prokEukBtn.classList.remove('bg-sky-600', 'text-white');
+                });
+            }
+        }
+
+        function renderCellSizeChart() {
+            const ctx = document.getElementById('cellSizeChart');
+            if (!ctx) return;
+            chartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Animal Cell (خلية حيوانية)', 'Plant Cell (خلية نباتية)'],
+                    datasets: [{
+                        label: 'Length (in micrometers - µm) - الطول (ميكرومتر)',
+                        data: [30, 100], 
+                        backgroundColor: [
+                            'rgba(56, 189, 248, 0.6)',
+                            'rgba(34, 197, 94, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(56, 189, 248, 1)',
+                            'rgba(34, 197, 94, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Max Length (µm) - الطول الأقصى'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = '';
+                                    if (context.label.includes('Animal')) {
+                                        label = 'Typical Range: 10-30 µm (النطاق النموذجي)';
+                                    } else {
+                                        label = 'Typical Range: 10-100 µm (النطاق النموذجي)';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
                 }
             });
         }
 
-               function populateLevels() {
-            levelsData.forEach((level, index) => {
-                const card = document.createElement('div');
-                card.className = 'level-card w-full bg-white p-3 rounded-lg shadow-sm border-2 border-transparent text-center';
-                card.dataset.id = level.id;
-                card.innerHTML = `
-                    <div class="font-bold font-english">${level.en}</div>
-                    <div class="text-stone-600">${level.ar}</div>
-                `;
-                card.addEventListener('click', () => displayLevelDetails(level.id));
-                levelsHierarchy.appendChild(card);
-                
-                if (index < levelsData.length - 1) {
-                    const connector = document.createElement('div');
-                    connector.className = 'hierarchy-connector';
-                    levelsHierarchy.appendChild(connector);
-                }
-            });
-
-            // إضافة رابط للمحاضرة الثانية
-            const lectureLink = document.createElement('a');
-            lectureLink.href = "lecture2.html";
-            lectureLink.textContent = "المحاضرة الثانية";
-            lectureLink.className = "block mt-4 text-center text-blue-600 hover:underline";
-            levelsHierarchy.appendChild(lectureLink);
-
-            displayLevelDetails(levelsData[0].id);
-        }
-
+        document.addEventListener('DOMContentLoaded', renderApp);
+    </script>
+</body>
+</html>
 
