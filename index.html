@@ -79,6 +79,14 @@
                 دليل تفاعلي للخصائص الأساسية للحياة ومستويات التنظيم البيولوجي.
             </p>
         </header>
+<nav class="flex justify-center mb-8 bg-stone-200/50 rounded-lg p-1 max-w-md mx-auto">
+    <a href="index.html" class="nav-btn w-1/2 p-2 rounded-md active">
+        الصفحة الرئيسية
+    </a>
+    <a href="lecture2.html" class="nav-btn w-1/2 p-2 rounded-md">
+        المحاضرة 2
+    </a>
+</nav>
 
         <nav class="flex justify-center mb-8 bg-stone-200/50 rounded-lg p-1 max-w-md mx-auto">
             <button id="nav-properties" class="nav-btn w-1/2 p-2 rounded-md active">
@@ -235,7 +243,7 @@
             });
         }
 
-        function populateLevels() {
+               function populateLevels() {
             levelsData.forEach((level, index) => {
                 const card = document.createElement('div');
                 card.className = 'level-card w-full bg-white p-3 rounded-lg shadow-sm border-2 border-transparent text-center';
@@ -253,14 +261,15 @@
                     levelsHierarchy.appendChild(connector);
                 }
             });
+
+            // إضافة رابط للمحاضرة الثانية
+            const lectureLink = document.createElement('a');
+            lectureLink.href = "lecture2.html";
+            lectureLink.textContent = "المحاضرة الثانية";
+            lectureLink.className = "block mt-4 text-center text-blue-600 hover:underline";
+            levelsHierarchy.appendChild(lectureLink);
+
             displayLevelDetails(levelsData[0].id);
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            setupNavigation();
-            populateProperties();
-            populateLevels();
-        });
-    </script>
-</body>
-</html>
+
