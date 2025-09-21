@@ -1,44 +1,49 @@
-function renderQuiz(){
-  const container=document.getElementById('quiz-container');
-  container.innerHTML='';
-  quizData.questions.forEach(q=>{
-    const qDiv=document.createElement('div');
-    qDiv.classList.add('mb-6','p-4','border','rounded','bg-stone-50');
-    qDiv.innerHTML=`<h3 class="font-bold mb-2">${q.questionNumber}. ${q.question}</h3>`;
+function renderQuiz() {
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+  quizData.questions.forEach(q => {
+    const qDiv = document.createElement('div');
+    qDiv.classList.add('mb-6', 'p-4', 'border', 'rounded', 'bg-stone-50');
+    qDiv.innerHTML = `<h3 class="font-bold mb-2">${q.questionNumber}. ${q.question}</h3>`;
 
-    const buttons=[];
-    q.answerOptions.forEach((opt,idx)=>{
-      const btn=document.createElement('button');
-      btn.className='block w-full text-left mb-2 p-2 rounded bg-stone-200 hover:bg-sky-200 transition-colors';
-      btn.textContent=opt.text;
-      btn.addEventListener('click',()=>{
-        buttons.forEach(b=>b.disabled=true);
-        if(opt.isCorrect){
-          btn.style.backgroundColor='green';
-          btn.style.color='white';
+    const buttons = [];
+    q.answerOptions.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'block w-full text-left mb-2 p-2 rounded bg-stone-200 hover:bg-sky-200 transition-colors';
+      btn.textContent = opt.text;
+      
+      // هنا تم تعديل السطر لضبط سمة data-is-correct
+      btn.dataset.isCorrect = opt.isCorrect;
+
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.disabled = true);
+        if (opt.isCorrect) {
+          btn.style.backgroundColor = 'green';
+          btn.style.color = 'white';
         } else {
-          btn.style.backgroundColor='red';
-          btn.style.color='white';
-          const correctBtn=buttons.find(b=>b.dataset.correct==='true');
-          if(correctBtn){
-            correctBtn.style.backgroundColor='green';
-            correctBtn.style.color='white';
+          btn.style.backgroundColor = 'red';
+          btn.style.color = 'white';
+          
+          // هنا تم تعديل السطر للبحث عن الزر الصحيح باستخدام السمة الجديدة
+          const correctBtn = buttons.find(b => b.dataset.isCorrect === 'true');
+          if (correctBtn) {
+            correctBtn.style.backgroundColor = 'green';
+            correctBtn.style.color = 'white';
           }
         }
-        const rationaleDiv=document.createElement('div');
-        rationaleDiv.className='mt-2 text-sm text-gray-700';
-        rationaleDiv.textContent=`Explanation: ${opt.rationale}`;
+        const rationaleDiv = document.createElement('div');
+        rationaleDiv.className = 'mt-2 text-sm text-gray-700';
+        rationaleDiv.textContent = `Explanation: ${opt.rationale}`;
         qDiv.appendChild(rationaleDiv);
       });
-      btn.dataset.correct=opt.isCorrect;
       qDiv.appendChild(btn);
       buttons.push(btn);
     });
 
-    if(q.hint){
-      const hintDiv=document.createElement('div');
-      hintDiv.className='mt-2 text-sm text-gray-600';
-      hintDiv.textContent=`Hint: ${q.hint}`;
+    if (q.hint) {
+      const hintDiv = document.createElement('div');
+      hintDiv.className = 'mt-2 text-sm text-gray-600';
+      hintDiv.textContent = `Hint: ${q.hint}`;
       qDiv.appendChild(hintDiv);
     }
 
